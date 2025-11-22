@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blue Lock Project</title>
+
+<style>
+/* ---------------------- ESTILO GENERAL ----------------------- */
+:root {
+  --bg: #0b0b14;
+  --text: #ffffff;
+  --card: rgba(255,255,255,0.08);
+  --accent: #4fa3ff;
+}
+
+.light {
+  --bg: #f1f1f1;
+  --text: #0e0e0e;
+  --card: rgba(0,0,0,0.08);
+  --accent: #0066ff;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", sans-serif;
+  overflow-x: hidden;
+  transition: 0.4s ease-in-out;
+}
+
+/* ---------------------- CONTENEDOR PRINCIPAL ---------------------- */
+#mainContent {
+  display: none;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+/* ---------------------- BOTÓN MODO OSCURO/CLARO ---------------------- */
+.themeBtn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+  z-index: 20;
+}
+
+/* ---------------------- PANTALLA DE CONTRASEÑA ---------------------- */
+#passwordScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+  text-align: center;
+}
+
+#passwordScreen input {
+  padding: 12px;
+  width: 200px;
+  border-radius: 8px;
+  border: none;
+}
+
+#passwordScreen button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Animación error */
+.shake {
+  animation: shake 0.3s linear;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-8px); }
+  100% { transform: translateX(0); }
+}
+
+/* ---------------------- TARJETAS ---------------------- */
+.card {
+  background: var(--card);
+  padding: 25px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  margin: 30px auto;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 18px rgba(0, 110, 255, 0.35);
+  animation: fadeUp 1s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------- FOTOS ---------------------- */
+.photo-wrapper {
+  width: 260px;
+  height: 340px;
+  margin: 0 auto 20px auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.18);
+  box-shadow: 0 0 20px rgba(0,140,255,0.4);
+  animation: floatImg 5s ease-in-out infinite;
+}
+
+.photo-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes floatImg {
+  0% { transform: translateY(0);}
+  50% { transform: translateY(-10px);}
+  100% { transform: translateY(0);}
+}
+
+/* ---------------------- BARRAS DE STATS + DESTELLOS ---------------------- */
+.statBar {
+  width: 100%;
+  height: 14px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  margin: 6px 0 14px;
+  overflow: hidden;
+}
+
+.statFill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* DESTELLO AZUL */
+.statFill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(0,120,255,0) 0%,
+    rgba(0,140,255,0.55) 50%,
+    rgba(0,120,255,0) 100%
+  );
+  filter: blur(2px);
+  animation: shineBlue 2s infinite linear;
+}
+
+@keyframes shineBlue {
+  0% { left: -120%; }
+  50% { left: 130%; }
+  100% { left: 130%; }
+}
+
+/* ---------------------- NIEVE ---------------------- */
+.snow {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.snowflake {
+  position: absolute;
+  top: -10px;
+  color: white;
+  opacity: 0.8;
+  font-size: 14px;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% { transform: translateY(-10px); }
+  100% { transform: translateY(110vh); }
+}
+</style>
+</head>
+<body>
+
+<button class="themeBtn" onclick="toggleTheme()">Modo</button>
+
+<!-- ---------------------- PANTALLA DE CONTRASEÑA ---------------------- -->
+<div id="passwordScreen">
+  <h2>Ingresá la contraseña</h2>
+  <input type="password" id="passInput" placeholder="••••">
+  <button onclick="checkPass()">Entrar</button>
+  <p id="errorMsg" style="color:red; display:none;">Contraseña incorrecta</p>
+</div>
+
+<!-- NIEVE -->
+<div class="snow" id="snowContainer"></div>
+
+<!-- ---------------------- CONTENIDO PRINCIPAL ---------------------- -->
+<div id="mainContent">
+
+  <!-- FICHA RINA -->
+  <div class="card">
+    <h2>𝄖 𝘽𝙇𝙐𝙀 𝙇𝙊𝘾𝙆 𝙋𝙍𝙊𝙅𝙀𝘾𝙏</h2>
+    <p>ᯓ⚽︎ 𝙎𝙏𝘼𝙏𝙎</p>
+
+    <div class="photo-wrapper">
+      <img src="imagen1.png" alt="Rina">
+    </div>
+
+<pre style="white-space: pre-wrap; font-size:15px;">
+⟢ 𝙉𝙤𝙢𝙗𝙧𝙚: Rina Itoshi
+⟢ 𝙀𝙙𝙖𝙙: 16 años.
+────────────────────────
+⟬ 𝟑𝟐𝟓 𝐩𝐮𝐧𝐭𝐨𝐬 𝐚 𝐫𝐞𝐩𝐚𝐫𝐭𝐢𝐫 — 𝐦𝐚́𝐱. 𝟏𝟓𝟎 𝐩𝐨𝐫 𝐬𝐭𝐚𝐭 ⟭
+⟬ 𝐏𝐮𝐧𝐭𝐨𝐬 𝐞𝐱𝐭𝐫𝐚: 𝟎𝟎 ⟭
+────────────────────────
+</pre>
+
+<!-- BARRAS + NÚMEROS ANIMADOS -->
+<p>Pase (<span class="statNumber" data-value="83">0</span>)</p>
+<div class="statBar"><div class="statFill" data-value="83"></div></div>
+
+<p>Tiro (<span class="statNumber" data-value="45">0</span>)</p>
+<div class="statBar"><div class="statFill" data-value="45"></div></div>
+
+<p>Físico (<span class="statNumber" data-value="93">0</span>)</p>
+<div class="statBar"><div class="statFill" data-value="92"></div></div>
+
+<p>Regate (<span class="statNumber" data-value="25">0</span>)</p>
+<div class="statBar"><div class="statFill" data-value="25"></div></div>
+
+<p>Defensa (<span class="statNumber" data-value="125">0</span>)</p>
+<div class="statBar"><div class="statFill" data-value="125"></div></div>
+
+<p>Velocidad (<span class="statNumber" data-value="73">0</span>)</p>
+<div class="statBar"><div class="statFill" data-value="73"></div></div>
+
+  </div>
+
+  <!-- KARASU -->
+  <div class="card">
+    <h2>SENDOU SHUUTO</h2>
+    <div class="photo-wrapper">
+      <img src="imagen2.jpg" alt="Karasu">
+    </div>
+    <p style="white-space:pre-wrap; font-size:15px;">
+El Sueño de la Estrella Japonesa Shouto Sendou
+
+Legendario.
+
+Pasiva estilo Tiro/Defensa.
+
+Había algo especial en él, pero no era talento puro. Era la manera en la que sonreía para las cámaras, cómo guiñaba el ojo a las fanáticas al final del partido o cómo dejaba que su cabello cayera perfectamente desordenado después de un gol. Él era la cara de la Sub-20 japonesa, no por lo que hacía con el balón, sino por lo que hacía con su presencia. Y lo sabía. “Quiero enamorarme de una idol y vivir una vida tranquila”, era su motivación y lo que solía decir frente a la cámara, con una sonrisa que volvía locas a miles. El fútbol era su camino, pero no su propósito final. No buscaba ser el mejor del mundo. Solo quería anotar de vez en cuando, vivir del aplauso y, tal vez, un día, bajarse del escenario con la mano entrelazada con la de alguien que cantara en escenarios brillantes.
+
+Sin embargo, detrás de todo ese brillo había algo real: su esfuerzo. No era prodigioso, pero tampoco mediocre. Corría cuando debía, defendía si lo exigían, y tiraba a gol como si ese balón llevara escrito el nombre de su fantasía. Su juego era un equilibrio extraño entre fanservice y entrega verdadera. Nadie esperaba que se partiera el alma en la cancha… pero a veces lo hacía, solo para que lo vieran.
+
+Desde el inicio recibe un bono de +14 en Velocidad, +15 en Tiro y +15 en Defensa por puro impulso emocional. Si alguna jugadora o aficionada en el entorno narrativo le presta atención o lo anima (aunque sea en broma), su motivación se dispara, ganando +6 extra a las mismas stats por 3 turnos. Si alguien menciona su nombre seguido de elogios, recibe un bono de +4 en cada stat gracias a su determinación, como si se convenciera de que el destino ya está de su lado. Solo una vez por partido.
+
+Corte de Escena
+
+Te deslizas o te interpones justo en el momento más dramático de la jugada rival, como si lo hiciera por puro instinto actoral. Su cuerpo parece estar en el lugar exacto para arruinar la escena contraria.
+
+Fuerza un duelo de Defensa vs Tiro o Pase, con +7 a tu Defensa.
+
+Si lo ganas, bloquea la jugada y se la pasas al jugador con mejores stats de tu equipo (a ti mismo si sos vos).
+
+Si la jugada era clave (últimos 20 m o área), además recibe +5 en Velocidad el siguiente turno propio.
+
+Forma de activación:
+Debes mencionar cómo interceptas el pase o tiro y usar el nombre de la habilidad [Corte de Escena]. Cooldown: 5 turnos.
+
+Final de Telenovela
+
+Cuando estás en el área y ves la oportunidad de brillar, canalizas todo el drama acumulado en un solo disparo. La postura, el grito, el impacto: todo es un show.
+
+Tiro con +10 de bonificación directa si está dentro de los 25 metros.
+
+Si anotas, se activa “Ovation”: el siguiente pase que reciba tendrá +6 en Velocidad y Regate.
+
+Si falla, su Defensa baja -4 por 1 turno.
+
+Forma de activación:
+Debes estar en rango de tiro y mencionar el uso de la habilidad junto a su nombre [Final de la Telenovela]. Cooldown: 4 turnos.
+
+Flash Position
+
+Puede activarse únicamente fuera de su turno si un rival realiza un pase elevado o filtrado. Te posicionas de forma inesperada, apareciendo justo cuando el ángulo de cámara te necesita.
+
+Se lanza un duelo de Velocidad vs Pase y luego Defensa vs Pase del rival con +8 en tu Defensa.
+
+Si ganas, intercepta la jugada y puedes hacer pase inmediato con +5 en la stat.
+
+Si pierdes, dejas un abucheo psicológico sobre el rival (-7 a su próximo pase).
+
+Forma de activación:
+Un compañero debe redactar la situación en la que sucede la intercepción, describir cómo ocurre y adjuntar el nombre de la habilidad [Flash Position]. Cooldown: 6 turnos.
+    </p>
+  </div>
+
+  <!-- AIKU -->
+  <div class="card">
+    <h2>OLIVER AIKU</h2>
+    <div class="photo-wrapper">
+      <img src="imagen3.png" alt="Aiku">
+    </div>
+    <p style="white-space:pre-wrap; font-size:15px;">
+REWORK
+
+EDICIÓN PARTIDO SUB-20
+
+Estilo policiaco de Oliver Aiku
+
+Legendario
+
+(Estilo)
+
+Guiado por los deseos de tus maestros la flor en tu interior que añoraba sus propios deseos fue arrancada de raíz. Dispuesto a cobrar venganza te estableciste una nueva meta, destruir a todos esos delanteros que fueron regados y nutridos por sus entrenadores. A menudo a los delanteros se les compara con ladrones al robarse la gloria, para destruirles te convertiste en un policía que los encarcela antes de que lo logren asfixiando sus jugadas como si fueses una serpiente. Comienzas con +5 puntos en todas tus estadísticas, tu riguroso entrenamiento hizo de ti un jugador muy completo en casi todas las áreas. Aunque eres un jugador que tiene sus parametros básicos equilibrados tu entrenamiento te ha dotado de una habilidad defensiva de primera categoria por lo que tú defensa se ve aumentada +15 puntos inicialmente, está claro que tú habilidad no se estanca durante el partido, cada vez que tienes un encuentro de defensa vs Pase/Tiro/Regate y salgas victorioso(con o sin ruleta) tu defensa aumenta en +5 puntos hasta un máximo de 3 veces (+15). Tu físico también es un arma bien pulida, como un oficial que paso un riguroso entrenamiento para enlistarse teniendo +12 de fisico pudiendo retener y marcar físicamente sin temor a ser dejado en el suelo por tener un cuerpo inadecuado. Aunque no eres el arquetipo de jugador veloz tampoco eres una tortuga en movimiento, tus piernas reciben una bonificación de +9 en velocidad y +8 en pase para finalizar tu estilo defensivo. Un extra es que al estar dentro del área chica de tu portería tu velocidad y defensa aumentan 8% como consecuencia a tu protección de los tres palos sin estar en la posición de portero.
+
+Meta-Vision base × filosofía policiaca
+
+Meta vision, habilidad pasiva creada para exponer tus máximas capacidades como defensor, funciona de la siguiente manera; Al inicio de alguna jugada debes observar todos tus ángulos para atrapar información importante agudizando tus sentidos en un nuevo circuito y proceso cerebral más preciso al predecir las jugadas enemigas llevando tu juego a una nueva dimensión casa que inspecciónas con la mirada el campo, teniendo que observar cada ángulo para tomar esa información y potenciar tus capacidades. La meta vision imperfecta te otorga +5 en todas las estadísticas sin excepción.
+
+Ejecucion
+
+Para hacer un uso correcto de "Meta vision × Filosofía policiaca" debe redactarse la inspección del campo donde atrapas información de todos los angulos posibles para posteriormente hacer referencia al nombre de la habilidad dentro del post. No posee cooldown.
+
+Defensa de la serpiente
+
+No te limitas a marcajes o persecusiónes sin sentido, tu cazas las jugadas más audaces de tus rivales dejandolos tener una sensación prematura de victoria antes de que tú aparezcas para encerrar a ese montón de ladrones. El funcionamiento de esta habilidad es despejar tiros/pases de larga distancia con un cabezazo limpio que terminará por enviar el balón a una dirección escogida anulando el encuentro defensa vs Pase/Tiro que naturalmente se generaría demostrando tu presencia como un muro inamovible en el campo.
+
+Ejecución
+
+Para hacer uso correcto de "Defensa de la serpiente" debe redactarse tu ubicación en el campo de forma específica además de hacer referencia en tu post a la habilidad, está habilidad no te permite conservar el balón, además, enviar el esferico a una locación escogida no debe confundirse con un pase puedes elegir a dónde enviarlo pero se considera balón suelto hasta que alguien lo recoja. Cooldown de 6 turnos propios.
+
+¡Estás en mi jurisdicción!
+
+Como el oficial de policía que eres tienes el deber de patrullar tu territorio para borrar todas las posibles amenazas que quieran surgir. Está habilidad te permite matar los dispar de los rivales desde cerca de forma inesperada al rechazar el balón de cualquier forma legal anulando el encuentro en el mismo momento, esto solo aplica para pasivas menores a primera división, para pasivas mayores se aplica una ruleta de defensa vs tiro con una reducción del 25% a la estadística rival.
+
+Ejecución
+
+Debe redactarse el uso de "¡Estás en mi jurisdicción!" Y la forma en la que bloqueas el disparo, después de eso la habilidad entrara en un enfriamiento de 4 turnos propios.
+
+¡Atualizacion de datos!
+
+Eres un jugador intelectual, notas de inmediato las fortalezas y debilidades de tus rivales cuando los enfrentas, dentro de tu cerebro se conserva una basa de datos que procesa la información en tiempo real para mostrarte la elección más probable del jugador durante el encuentro. Está habilidad funciona en dos pasos: Primero debe tener se un enfrentamiento de cualquier tipo con el rival, tras eso sí se da una segundo duelo puedes hacer uso de "¡Actualizacion de datos!" Para tener una red de información sobre las fortalezas y debilidades del rival reduciendo un 18% de la estadística con la que te quiera enfrentar incluso si su pasiva es irreducible, manteniendo está reducción durante el resto del partido cada vez que se enfrenten.
+
+Ejecución
+
+Para hacer uso de "Actualización de datos" primero debe haberse dado un encuentro, la estadística que se haya usado para ello no es relevante, una vez cumplido ese requisito puedes hacer uso de la habilidad durante el segundo choque, en caso de hacer uso de la habilidad durante el primer encuentro no se toma como válida. Cooldown de 4 turnos globales.
+
+Movimiento especial en estado de flujo
+
+¡Bet all!
+
+Una última defensa, una apuesta de vida o muerte y tú estarás en el centro de todo esto. Cuando todo aparece perdido tu gran análisis en el campo sale a relucir, forzando tus capacidades más allá del límite estás dispuesto a morir con tal de defender la jugada. La funcionalidad de esta habilidad es la siguiente; Cuando ya cumpliste el requisito de "¡Actualización de datos!" Y eres superado por tu rival tienes una última oportunidad de volver al trabajo de forma inmediata forzando una ruleta con probabilidad 50/50 ¿Estadísticas? Pierden importancia cuando el oficial está en pleno arresto, si sales victorioso de la ruleta puedes someter inmediatamente a tu oponente generando un rechace del balón que queda suelto en una dirección aleatoria. En el instante en el que se deba ir a recuperar el balón tus aliados ven aumentada su Estadística de velocidad un 10% al estar alerta y confiar en tu habilidad defensiva para recuperar el balón.
+
+Ejecución
+
+Para hacer uso adecuado de "¡Bet all!" Deben haberse cumplido los requisitos de "¡Actualización de datos!" Y redactar una acción contra tu rival tras ser superado y hacer válido el uso de "¡Bet all!" Haciendo referencia a la habilidad dentro del post.
+
+¡Yo también tengo corazón de delantero!
+
+Un acto de rebeldía o tal vez de redención hacia ese niño pequeño cuyo más grande anhelo fue arrancado sin piedad por los entrenadores del equipo. Ese ego que estaba profundamente dormido en tu interior ha despertado y luchará hasta el final con tal de no extinguirse. Está habilidad te permite desaparecer de la visión de todos dándote libertad para moverte por el campo como un delantero obteniendo +10 en tiro, velocidad y físico durante la jugada. Al finalizar con un tiro desatas un cañonazo que reduce 5% la estadistica de todas las opciones de la ruleta de gol.
+
+Ejecución
+
+Debe redactarse el avance y el remate en la jugada para hacer válido el uso de "¡Yo también tengo corazón de delantero!" Para posteriormente ser inutilizable por el resto del partido.
+    </p>
+  </div>
+
+</div>
+
+<script>
+/* ---------------------- CONTRASEÑA ---------------------- */
+function checkPass() {
+  const input = document.getElementById("passInput").value;
+  const error = document.getElementById("errorMsg");
+
+  if (input === "1234") {
+    document.getElementById("passwordScreen").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+    animateStats();
+    animateNumbers();   // ← AGREGADO
+  } else {
+    error.style.display = "block";
+    document.getElementById("passwordScreen").classList.add("shake");
+    setTimeout(() => {
+      document.getElementById("passwordScreen").classList.remove("shake");
+    }, 300);
+  }
+}
+
+/* ---------------------- MODO OSCURO/CLARO ---------------------- */
+function toggleTheme() {
+  document.body.classList.toggle("light");
+}
+
+/* ---------------------- ANIMAR BARRAS ---------------------- */
+function animateStats() {
+  const bars = document.querySelectorAll(".statFill");
+  bars.forEach(b => {
+    const val = b.getAttribute("data-value");
+    let pct = Math.min(100, Math.round((val / 150) * 100));
+    b.style.width = pct + "%";
+  });
+}
+
+/* ---------------------- ANIMAR NÚMEROS ---------------------- */
+function animateNumbers() {
+  const nums = document.querySelectorAll(".statNumber");
+
+  nums.forEach(n => {
+    let finalValue = parseInt(n.getAttribute("data-value"));
+    let current = 0;
+    let speed = Math.max(10, 2000 / finalValue);
+
+    let interval = setInterval(() => {
+      current++;
+      n.innerText = current;
+      if (current >= finalValue) clearInterval(interval);
+    }, speed);
+  });
+}
+
+/* ---------------------- NIEVE ---------------------- */
+function spawnSnow() {
+  const snowContainer = document.getElementById("snowContainer");
+
+  for (let i = 0; i < 50; i++) {
+    let flake = document.createElement("div");
+    flake.classList.add("snowflake");
+    flake.innerHTML = "❄";
+
+    flake.style.left = Math.random() * 100 + "%";
+    flake.style.fontSize = (Math.random() * 10 + 10) + "px";
+    flake.style.animationDuration = (Math.random() * 5 + 4) + "s";
+
+    snowContainer.appendChild(flake);
+
+    flake.style.animationDelay = (Math.random() * 5) + "s";
+  }
+}
+spawnSnow();
+</script>
+
+</body>
+</html>
