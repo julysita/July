@@ -172,6 +172,22 @@ body {
   100% { left: 130%; }
 }
 
+  .statBar {
+  width: 100%;
+  height: 10px;
+  background: #222;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 5px 0 15px;
+}
+
+.statFill {
+  height: 100%;
+  background: #00c8ff;
+  width: 0%;
+  border-radius: 20px;
+}
+  
 /* ---------------------- NIEVE ---------------------- */
 .snow {
   pointer-events: none;
@@ -389,6 +405,45 @@ Debe redactarse el avance y el remate en la jugada para hacer válido el uso de 
 </div>
 
 <script>
+
+  document.addEventListener("DOMContentLoaded", () => {
+  
+  const numbers = document.querySelectorAll(".statNumber");
+  const bars = document.querySelectorAll(".statFill");
+
+  // --- Animar números ---
+  numbers.forEach(num => {
+    const finalValue = parseInt(num.getAttribute("data-value"));
+    let count = 0;
+
+    const speed = 20; // velocidad (más bajo = más rápido)
+
+    const update = () => {
+      if (count < finalValue) {
+        count++;
+        num.textContent = count;
+        requestAnimationFrame(update);
+      } else {
+        num.textContent = finalValue;
+      }
+    };
+
+    update();
+  });
+
+  // --- Animar barras ---
+  bars.forEach(bar => {
+    const finalWidth = bar.getAttribute("data-value");
+
+    bar.style.width = "0%";
+    bar.style.transition = "width 2s ease-out";
+
+    setTimeout(() => {
+      bar.style.width = finalWidth + "%";
+    }, 200);
+  });
+
+});
 /* ------------------ TEMA ------------------ */
 function toggleTheme(){
   document.body.classList.toggle("light");
@@ -415,5 +470,6 @@ for (let i = 0; i < 40; i++) {
 
 </body>
 </html>
+
 
 
